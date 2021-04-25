@@ -22,7 +22,7 @@ static TAutoConsoleVariable<int> CVarTraceMode(
 
 static TAutoConsoleVariable<bool> CVarDisplayTrace(
 	TEXT("Tantrum.Character.Debug.DisplayTrace"),
-	false,
+	true,
 	TEXT("Display Trace"),
 	ECVF_Default);
 
