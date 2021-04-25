@@ -38,6 +38,8 @@ public:
 
 	bool bHighlighted = false;
 
+	
+
 protected:
 
 	enum class EState
