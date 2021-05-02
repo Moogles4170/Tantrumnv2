@@ -14,7 +14,7 @@ constexpr int CVLineCastActorTransform = 2;
 //add cvars for debug
 static TAutoConsoleVariable<int> CVarTraceMode(
 	TEXT("Tantrum.Character.Debug.TraceMode"),
-	1,
+	0,
 	TEXT("   0: Sphere cast PlayerView is used for direction/rotation (default).\n")
 	TEXT("   1: Sphere cast using ActorTransform \n")
 	TEXT("   2: Line cast using ActorTransform \n"),
@@ -22,7 +22,7 @@ static TAutoConsoleVariable<int> CVarTraceMode(
 
 static TAutoConsoleVariable<bool> CVarDisplayTrace(
 	TEXT("Tantrum.Character.Debug.DisplayTrace"),
-	true,
+	false,
 	TEXT("Display Trace"),
 	ECVF_Default);
 
@@ -47,6 +47,7 @@ ATantrumnCharacterBase::ATantrumnCharacterBase()
 void ATantrumnCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+	EffectCooldown = DefaultEffectCooldown;
 }
 
 // Called every frame
@@ -54,9 +55,24 @@ void ATantrumnCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//UpdateStun();
 	if (bIsStunned)
 	{
 		return;
+	}
+
+	if (bIsUnderEffect)
+	{
+		if (EffectCooldown > 0)
+		{
+			EffectCooldown -= DeltaTime;
+		}
+		else
+		{
+			bIsUnderEffect = false;
+			EffectCooldown = DefaultEffectCooldown;
+			EndEffect();
+		}
 	}
 
 	if (CharacterThrowState == ECharacterThrowState::Throwing)
@@ -197,7 +213,7 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 
 void ATantrumnCharacterBase::RequestUseObject()
 {
-	//ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
+	ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
 	ThrowableActor->Destroy();
 	ResetThrowableObject();
 }
@@ -262,6 +278,7 @@ void ATantrumnCharacterBase::OnStunEnd()
 	StunBeginTimestamp = 0.0f;
 	StunTime = 0.0f;
 }
+
 
 bool ATantrumnCharacterBase::PlayThrowMontage()
 {
@@ -462,5 +479,49 @@ void ATantrumnCharacterBase::OnThrowObject()
 			DrawDebugLine(GetWorld(), Start, Start + Direction, FColor::Red, false, 5.0f);
 		}
 	}
-	
+}
+
+void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff)
+{
+	if (bIsUnderEffect) return;
+
+	CurrentEffect = EffectType;
+	bIsUnderEffect = true;
+	bIsEffectBuff = bIsBuff;
+
+	switch (CurrentEffect)
+	{
+	case EEffectType::Speed:
+		bIsEffectBuff ? SprintSpeed *= 2 : GetCharacterMovement()->DisableMovement();
+		break;
+	case EEffectType::Jump:
+		bIsEffectBuff ? JumpMaxCount = 2 : GetCharacterMovement()->DisableMovement();
+		break;
+	case EEffectType::Power:
+		bIsEffectBuff ? ThrowSpeed *= 2 : GetCharacterMovement()->DisableMovement();
+		break;
+
+	default:
+		break;
+	}
+}
+
+void ATantrumnCharacterBase::EndEffect()
+{
+	bIsUnderEffect = false;
+
+	switch (CurrentEffect)
+	{
+	case EEffectType::Speed:
+		bIsEffectBuff ? SprintSpeed /= 2, RequestSprintEnd() : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		break;
+	case EEffectType::Jump:
+		bIsEffectBuff ? JumpMaxCount = 1 : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		break;
+	case EEffectType::Power:
+		bIsEffectBuff ? ThrowSpeed /= 2 : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		break;
+	default:
+		break;
+	}
 }

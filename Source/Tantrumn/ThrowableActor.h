@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InteractInterface.h"
 #include "ThrowableActor.generated.h"
 
 class UStaticMeshComponent;
@@ -38,7 +39,7 @@ public:
 
 	bool bHighlighted = false;
 
-	
+	EEffectType GetEffectType();
 
 protected:
 
@@ -73,5 +74,8 @@ protected:
 
 	UPROPERTY()
 	AActor* PullActor = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	EEffectType EffectType = EEffectType::None;
 
 };

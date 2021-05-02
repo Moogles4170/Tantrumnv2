@@ -4,6 +4,7 @@
 #include "ThrowableActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
+#include "InteractInterface.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "DrawDebugHelpers.h"
 #include "TantrumnCharacterBase.h"
@@ -49,6 +50,15 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 
 	//if launched and hit a character that is not the launcher
 	//do damage or whatever it is we want
+	if (State == EState::Launch)
+	{
+		IInteractInterface* I = Cast<IInteractInterface>(Other);
+		if (I)
+		{
+			I->Execute_ApplyEffect(Other, EffectType, false);
+		}
+	}
+
 
 	//ignore all other hits
 
@@ -158,6 +168,11 @@ void AThrowableActor::ToggleHighlight(bool bIsOn)
 {
 	bHighlighted = bIsOn;
 	StaticMeshComponent->SetRenderCustomDepth(bIsOn);
+}
+
+EEffectType AThrowableActor::GetEffectType()
+{
+	return EEffectType();
 }
 
 bool AThrowableActor::SetHomingTarget(AActor* Target)

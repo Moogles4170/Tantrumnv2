@@ -104,11 +104,14 @@ void ATantrumnPlayerController::RequestThrowObject(float AxisValue)
 
 			if (IsFlick)
 			{
-				
+				if (AxisValue > 0)
 				{
 					TantrumnCharacterBase->RequestThrowObject();
 				}
-				
+				else
+				{
+					TantrumnCharacterBase->RequestUseObject();
+				}
 			}
 		}
 		else
