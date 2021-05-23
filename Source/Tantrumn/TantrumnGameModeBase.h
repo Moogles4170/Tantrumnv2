@@ -3,24 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameModeBase.h"
 #include "TantrumnGameWidget.h"
 #include "TantrumnGameModeBase.generated.h"
 
-class APlayerController;
-
-// Enum to track the current state of the game 
-UENUM(BlueprintType)
-enum class EGameState : uint8
-{
-	None		UMETA(DisplayName = "None"),
-	Waiting		UMETA(DisplayName = "Waiting"),
-	Playing		UMETA(DisplayName = "Playing"),
-	Paused		UMETA(DisplayName = "Paused"),
-	GameOver	UMETA(DisplayName = "GameOver"),
-};
-
+class AController;
+class ATantrumnPlayerController;
 
 UCLASS()
 class TANTRUMN_API ATantrumnGameModeBase : public AGameModeBase
@@ -32,33 +20,25 @@ public:
 	ATantrumnGameModeBase();
 
 	virtual void BeginPlay() override;
+	virtual void RestartPlayer(AController* NewPlayer) override;
 
-	UFUNCTION(BlueprintCallable)
-	EGameState GetCurrentGameState() const;
-
-	void PlayerReachedEnd();
+	void RestartGame();
 
 private:
-
-	//Create and set CurrentGameState to None. This will be tracked in the code file.
-	UPROPERTY(VisibleAnywhere, Category = "States")
-	EGameState CurrentGameState = EGameState::None;
 
 	//Countdown before gameplay state begins. Exposed so we can easily change this in BP editor.
 	UPROPERTY(EditAnywhere, Category = "Game Details")
 	float GameCountdownDuration = 4.0f;
 
+	UFUNCTION(BlueprintCallable, Category = "Game Details")
+	void SetNumExpectedPlayers(uint8 InNumExpectedPlayers) { NumExpectedPlayers = InNumExpectedPlayers; }
+
+	UPROPERTY(EditAnywhere, Category = "Game Details")
+	uint8 NumExpectedPlayers = 1u;
+
 	FTimerHandle TimerHandle;
 
-	UPROPERTY()
-	UTantrumnGameWidget* GameWidget;
-	UPROPERTY(EditAnywhere, Category = "Widget")
-	TSubclassOf<UTantrumnGameWidget> GameWidgetClass;
-
-	APlayerController* PC = nullptr;
-
-
+	void AttemptStartGame();
 	void DisplayCountdown();
 	void StartGame();
-	
 };

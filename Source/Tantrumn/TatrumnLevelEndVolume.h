@@ -8,7 +8,7 @@
 
 class ATantrumnGameModeBase;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TANTRUMN_API ATatrumnLevelEndVolume : public ATriggerVolume
 {
 	GENERATED_BODY()
@@ -25,6 +25,4 @@ private:
 	//Custom Overlap funtion to override the Actor BeginOverlap version
 	UFUNCTION()
 	void OnOverlapBegin(class AActor* OverlappedActor, class AActor* OtherActor);
-
-	ATantrumnGameModeBase* GameModeRef;
 };

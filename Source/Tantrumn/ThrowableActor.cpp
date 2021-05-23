@@ -13,7 +13,9 @@
 AThrowableActor::AThrowableActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	SetReplicateMovement(true);
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 	RootComponent = StaticMeshComponent;
@@ -23,12 +25,19 @@ AThrowableActor::AThrowableActor()
 void AThrowableActor::BeginPlay()
 {
 	Super::BeginPlay();
-	ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AThrowableActor::ProjectileStop);
+
+	if (HasAuthority())
+	{
+		ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AThrowableActor::ProjectileStop);
+	}
 }
 
 void AThrowableActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ProjectileMovementComponent->OnProjectileStop.RemoveDynamic(this, &AThrowableActor::ProjectileStop);
+	if (HasAuthority())
+	{
+		ProjectileMovementComponent->OnProjectileStop.RemoveDynamic(this, &AThrowableActor::ProjectileStop);
+	}
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -41,15 +50,7 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 		return;
 	}
 
-	//three options when hit
-	//if in attached, ignore
 
-	//if not the actor was being pulled or launched
-	//pulled we want to check that the hit is of the actor pulling
-	//in which case it's a successful attach
-
-	//if launched and hit a character that is not the launcher
-	//do damage or whatever it is we want
 	if (State == EState::Launch)
 	{
 		IInteractInterface* I = Cast<IInteractInterface>(Other);
@@ -59,10 +60,6 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 		}
 	}
 
-
-	//ignore all other hits
-
-	//this will wait until the projectile comes to a natural stop before returning it to idle
 
 	if (PullActor && State == EState::Pull)
 	{
@@ -106,7 +103,6 @@ void AThrowableActor::Tick(float DeltaTime)
 		DrawDebugSphere(GetWorld(), GetActorLocation(), 80.0f, 16, FColor::Blue, false, 0.0f, 0, 2.0f);
 
 	}
-
 }
 
 bool AThrowableActor::Pull(AActor* InActor)

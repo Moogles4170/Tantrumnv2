@@ -17,9 +17,14 @@ class TANTRUMN_API UTantrumnGameWidget : public UUserWidget
 public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
-		void StartCountdown(float CountdownTime, class ATantrumnGameModeBase* GameMode);
+	void StartCountdown(float CountdownTime, class ATantrumnPlayerController* TantrumnPlayerController);
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void LevelComplete();
+	void LevelComplete();
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void DisplayResults();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void RemoveResults();
 };

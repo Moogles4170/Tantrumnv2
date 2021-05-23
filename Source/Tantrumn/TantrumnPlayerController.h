@@ -6,9 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "TantrumnPlayerController.generated.h"
 
-class ATantrumnGameModeBase;
+class ATantrumnCharacterBase;
+class ATantrumnGameStateBase;
 class UUserWidget;
-
 
 UCLASS()
 class TANTRUMN_API ATantrumnPlayerController : public APlayerController
@@ -18,9 +18,29 @@ class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 	public:
 		virtual void BeginPlay() override;
 
+		//in local mp we need to make sure the controller has received the player in order to correctly set up the HUD
+		virtual void ReceivedPlayer() override;
+
+		virtual void OnPossess(APawn* aPawn) override;
+		virtual void OnUnPossess() override;
+
+		UFUNCTION(Client, Reliable)
+		void ClientDisplayCountdown(float GameCountdownDuration);
+
+		UFUNCTION(Client, Reliable)
+		void ClientRestartGame();
+
+		UFUNCTION(Client, Reliable)
+		void ClientReachedEnd();
+
+		UFUNCTION(Server, Reliable)
+		void ServerRestartLevel();
+
 	protected:
 
 		void SetupInputComponent() override;
+
+		bool CanProcessRequest() const;
 
 		void RequestMoveForward(float AxisValue);
 		void RequestMoveRight(float AxisValue);
@@ -38,8 +58,14 @@ class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 		void RequestCrouchStop();
 
 		void RequestSprintStart();
-		void RequestSprintStop();
+		void RequestSprintEnd();
 
+
+		UPROPERTY(EditAnywhere, Category = "HUD")
+		TSubclassOf<class UUserWidget> HUDClass;
+
+		UPROPERTY()
+		UUserWidget* HUDWidget;
 
 		/** Base lookup rate, in deg/sec. Other scaling may affect final lookup rate. */
 		UPROPERTY(EditAnywhere, Category = "Look")
@@ -50,13 +76,13 @@ class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 		float BaseLookRightRate = 90.0f;
 
 		//used to determine flick of axis
-		//float LastDelta = 0.0f;
 		float LastAxis = 0.0f;
 
 		UPROPERTY(EditAnywhere, Category = "Input")
-		float FlickThreshold = 0.75f;
+		float FlickThreshold = 0.70f;
 
-		ATantrumnGameModeBase* GameModeRef;
+		UPROPERTY()
+		ATantrumnGameStateBase* TantrumnGameState;
 };
 
 
