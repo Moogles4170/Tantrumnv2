@@ -18,6 +18,7 @@ enum class EGameState : uint8
 };
 
 class ATantrumnCharacterBase;
+class ATantrumnPlayerState;
 
 USTRUCT()
 struct FGameResult
@@ -53,6 +54,9 @@ public:
 	void ClearResults();
 
 protected:
+
+	void UpdateResults(ATantrumnPlayerState* PlayerState, ATantrumnCharacterBase* TantrumnCharacter);
+
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GameState, Category = "States")
 	EGameState GameState = EGameState::None;
 

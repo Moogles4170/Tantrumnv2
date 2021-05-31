@@ -28,7 +28,6 @@ public:
 
 	UFUNCTION()
 	void RestartGame(ATantrumnPlayerController* TantrumnPlayerController);
-
 protected:
 	UFUNCTION()
 	void OnGameStateSet(AGameStateBase* GameStateBase);
@@ -37,6 +36,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<UTantrumnGameWidget> GameWidgetClass; // Exposed class to check the type of widget to display
 
+	//only in splitscreen coop will there need to more than one entry in this map
 	UPROPERTY()
 	TMap<APlayerController*, UTantrumnGameWidget*> GameWidgets;
 

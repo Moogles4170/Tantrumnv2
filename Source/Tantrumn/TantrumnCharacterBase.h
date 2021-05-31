@@ -40,6 +40,7 @@ public:
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 	virtual void FellOutOfWorld(const class UDamageType& dmgType) override;
 
+	UFUNCTION(BlueprintCallable)
 	void RequestSprintStart();
 	void RequestSprintEnd();
 
@@ -59,6 +60,11 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsPullingObject() const { return CharacterThrowState == ECharacterThrowState::RequestingPull || CharacterThrowState == ECharacterThrowState::Pulling; }
+
+	//this function is mainly for AI
+	//makes sure the linetrace is a success, and bypasses the tracing done in Tick()
+	UFUNCTION(BlueprintCallable)
+	bool AttemptPullObjectAtLocation(const FVector& InLocation);
 
 	UFUNCTION(BlueprintPure)
 	bool IsThrowing() const { return CharacterThrowState == ECharacterThrowState::Throwing; }
@@ -90,7 +96,7 @@ protected:
 	void SphereCastPlayerView();
 	void SphereCastActorTransform();
 	void LineCastActorTransform();
-	void ProcessTraceResult(const FHitResult& HitResult);
+	void ProcessTraceResult(const FHitResult& HitResult, bool bHighlight = true);
 
 	//RPC's actions that can need to be done on the server in order to replicate
 
