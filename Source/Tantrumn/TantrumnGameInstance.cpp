@@ -60,7 +60,6 @@ void UTantrumnGameInstance::RestartGame(ATantrumnPlayerController* TantrumnPlaye
 	if (GameWidget)
 	{
 		(*GameWidget)->RemoveResults();
-		//restore game input 
 		FInputModeGameOnly InputMode;
 		TantrumnPlayerController->SetInputMode(InputMode);
 		TantrumnPlayerController->bShowMouseCursor = false;

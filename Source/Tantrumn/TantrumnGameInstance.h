@@ -8,6 +8,7 @@
 
 class ATantrumnPlayerController;
 class ATantrumnGameStateBase;
+class ATantrumnGameModeBase;
 class UTantrumnGameWidget;
 
 UCLASS()
@@ -31,6 +32,8 @@ public:
 protected:
 	UFUNCTION()
 	void OnGameStateSet(AGameStateBase* GameStateBase);
+
+
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Widget")

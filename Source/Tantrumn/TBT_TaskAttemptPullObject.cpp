@@ -30,9 +30,6 @@ EBTNodeResult::Type UTBT_TaskAttemptPullObject::ExecuteTask(UBehaviorTreeCompone
 			const FVector TargetLocation = MyBlackboard->GetValue<UBlackboardKeyType_Vector>(BlackboardKey.GetSelectedKeyID());
 			if (TantrumnCharacterBase->AttemptPullObjectAtLocation(TargetLocation))
 			{
-				
-
-				
 				return EBTNodeResult::Succeeded;
 			}
 		}
