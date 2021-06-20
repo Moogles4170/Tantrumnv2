@@ -834,8 +834,8 @@ void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, 
 	case EEffectType::Jump:
 		// Implement Jump Buff/Debuff
 		break;
-	case EEffectType::Power:
-		// Implement Power Buff/Debuff
+	case EEffectType::Heal:
+		//Heal implementation
 		break;
 	default:
 		break;
@@ -867,7 +867,7 @@ void ATantrumnCharacterBase::EndEffect()
 	case EEffectType::Jump:
 		// Implement Jump Buff/Debuff
 		break;
-	case EEffectType::Power:
+	case EEffectType::Heal:
 		// Implement Power Buff/Debuff
 		break;
 	default:

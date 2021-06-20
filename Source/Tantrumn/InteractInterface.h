@@ -19,7 +19,7 @@ enum class EEffectType : uint8
 	None		UMETA(DisplayName = "None"),
 	Speed		UMETA(DisplayName = "SpeedBuff"),
 	Jump		UMETA(DisplayName = "JumpBuff"),
-	Power		UMETA(DisplayName = "PowerBuff"),
+	Heal		UMETA(DisplayName = "Heal"),
 };
 
 class TANTRUMN_API IInteractInterface
