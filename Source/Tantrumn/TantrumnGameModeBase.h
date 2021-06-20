@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+
 #include "TantrumnGameWidget.h"
+#include "GameFramework/GameModeBase.h"
 #include "TantrumnGameModeBase.generated.h"
 
 class AController;
@@ -17,6 +18,7 @@ class TANTRUMN_API ATantrumnGameModeBase : public AGameModeBase
 
 public:
 
+	// --- FUNCTIONS --- //
 	ATantrumnGameModeBase();
 
 	virtual void BeginPlay() override;
@@ -26,7 +28,11 @@ public:
 
 private:
 
-	//Countdown before gameplay state begins. Exposed so we can easily change this in BP editor.
+	// --- VARS --- //
+	UPROPERTY(EditAnywhere, Category = "Widget")
+	TSubclassOf<UTantrumnGameWidget> GameWidgetClass; // Exposed class to check the type of widget to display
+
+	// Countdown before gameplay state begins. Exposed so we can easily change this in BP editor. 
 	UPROPERTY(EditAnywhere, Category = "Game Details")
 	float GameCountdownDuration = 4.0f;
 
@@ -38,6 +44,7 @@ private:
 
 	FTimerHandle TimerHandle;
 
+	// --- FUNCTIONS --- //
 	void AttemptStartGame();
 	void DisplayCountdown();
 	void StartGame();

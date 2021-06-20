@@ -18,7 +18,6 @@ void ATantrumnGameStateBase::UpdateResults(ATantrumnPlayerState* PlayerState, AT
 
 	const bool IsWinner = Results.Num() == 0;
 	PlayerState->SetIsWinner(IsWinner);
-	//ensureAlwaysMsgf(IsWinner, TEXT("ATantrumnCharacterBase::OnMontageEnded Winner Logic Broken"));
 	PlayerState->SetCurrentState(EPlayerGameState::Finished);
 
 	FGameResult Result;
@@ -28,18 +27,16 @@ void ATantrumnGameStateBase::UpdateResults(ATantrumnPlayerState* PlayerState, AT
 	Results.Add(Result);
 }
 
+//only ever called by the authority
 void ATantrumnGameStateBase::OnPlayerReachedEnd(ATantrumnCharacterBase* TantrumnCharacter)
 {
 	ensureMsgf(HasAuthority(), TEXT("ATantrumnGameStateBase::OnPlayerReachedEnd being called from Non Authority!"));
 
 	//two cases, Player or AI reaches the end
-
 	if (ATantrumnPlayerController* TantrumnPlayerController = TantrumnCharacter->GetController<ATantrumnPlayerController>())
 	{
-
 		TantrumnPlayerController->ClientReachedEnd();
 		TantrumnCharacter->GetCharacterMovement()->DisableMovement();
-
 		ATantrumnPlayerState* PlayerState = TantrumnPlayerController->GetPlayerState<ATantrumnPlayerState>();
 		UpdateResults(PlayerState, TantrumnCharacter);
 
@@ -55,6 +52,7 @@ void ATantrumnGameStateBase::OnPlayerReachedEnd(ATantrumnCharacterBase* Tantrumn
 		UpdateResults(PlayerState, TantrumnCharacter);
 		TantrumnAIController->OnReachedEnd();
 	}
+
 }
 
 void ATantrumnGameStateBase::ClearResults()
@@ -68,9 +66,12 @@ void ATantrumnGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 
 	FDoRepLifetimeParams SharedParams;
 	//SharedParams.bIsPushBased = true;
+	//SharedParams.Condition = COND_SkipOwner;
 
 	DOREPLIFETIME_WITH_PARAMS_FAST(ATantrumnGameStateBase, GameState, SharedParams);
 	DOREPLIFETIME_WITH_PARAMS_FAST(ATantrumnGameStateBase, Results, SharedParams);
+
+	//DOREPLIFETIME(ATantrumnCharacterBase, CharacterThrowState);
 }
 
 void ATantrumnGameStateBase::OnRep_GameState(const EGameState& OldGameState)
@@ -78,5 +79,3 @@ void ATantrumnGameStateBase::OnRep_GameState(const EGameState& OldGameState)
 	UE_LOG(LogTemp, Warning, TEXT("OldGameState: %s"), *UEnum::GetDisplayValueAsText(OldGameState).ToString());
 	UE_LOG(LogTemp, Warning, TEXT("GameState: %s"), *UEnum::GetDisplayValueAsText(GameState).ToString());
 }
-
-

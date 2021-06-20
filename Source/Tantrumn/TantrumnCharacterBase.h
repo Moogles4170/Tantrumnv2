@@ -6,8 +6,8 @@
 #include "InteractInterface.h"
 #include "GameFramework/Character.h"
 #include "Sound/SoundCue.h"
-
 #include "TantrumnCharacterBase.generated.h"
+
 
 class AThrowableActor;
 
@@ -19,10 +19,13 @@ enum class ECharacterThrowState : uint8
 	Pulling			UMETA(DisplayName = "Pulling"),
 	Attached		UMETA(DisplayName = "Attached"),
 	Throwing		UMETA(DisplayName = "Throwing"),
+	Aiming			UMETA(DisplayName = "Aiming"),
 };
 
 UCLASS()
-class TANTRUMN_API ATantrumnCharacterBase : public ACharacter, public IInteractInterface
+class TANTRUMN_API ATantrumnCharacterBase
+	: public ACharacter
+	, public IInteractInterface
 {
 	GENERATED_BODY()
 
@@ -33,6 +36,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Landed(const FHitResult& Hit) override;
@@ -45,18 +49,21 @@ public:
 	void RequestSprintEnd();
 
 	UFUNCTION(BlueprintCallable)
-	void RequestPullObject();
-	void RequestStopPullObject();
+	void RequestThrowObject();
 
 	UFUNCTION(BlueprintCallable)
-	void RequestThrowObject();
+	void RequestPullObject();
+	void RequestAim();
+
+	void RequestStopPullObject();
+	void RequestStopAim();
 	void ResetThrowableObject();
 
 	void RequestUseObject();
 
 	void OnThrowableAttached(AThrowableActor* InThrowableActor);
-
-	bool CanThrowObject() const { return CharacterThrowState == ECharacterThrowState::Attached; }
+	//this can now be a mask/bitflag as both can be true
+	bool CanThrowObject() const { return CharacterThrowState == ECharacterThrowState::Attached || CharacterThrowState == ECharacterThrowState::Aiming; }
 
 	UFUNCTION(BlueprintPure)
 	bool IsPullingObject() const { return CharacterThrowState == ECharacterThrowState::RequestingPull || CharacterThrowState == ECharacterThrowState::Pulling; }
@@ -70,10 +77,19 @@ public:
 	bool IsThrowing() const { return CharacterThrowState == ECharacterThrowState::Throwing; }
 
 	UFUNCTION(BlueprintPure)
+	bool CanAim() const { return CharacterThrowState == ECharacterThrowState::Attached; }
+
+	UFUNCTION(BlueprintPure)
+	bool IsAiming() const { return CharacterThrowState == ECharacterThrowState::Aiming; }
+
+	UFUNCTION(BlueprintPure)
 	ECharacterThrowState GetCharacterThrowState() const { return CharacterThrowState; }
 
 	UFUNCTION(BlueprintPure)
 	bool IsStunned() const { return bIsStunned; }
+
+	UFUNCTION(BlueprintCallable)
+	void NotifyHitByThrowable(AThrowableActor* InThrowable);
 
 	UFUNCTION(BlueprintPure)
 	bool IsBeingRescued() const { return bIsBeingRescued; }
@@ -83,11 +99,6 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerPlayCelebrateMontage();
-
-	UFUNCTION()
-	void OnThrowObject();
-
-	FTimerHandle ThrowTimer;
 
 protected:
 	// Called when the game starts or when spawned
@@ -99,7 +110,6 @@ protected:
 	void ProcessTraceResult(const FHitResult& HitResult, bool bHighlight = true);
 
 	//RPC's actions that can need to be done on the server in order to replicate
-
 	UFUNCTION(Server, Reliable)
 	void ServerSprintStart();
 
@@ -111,6 +121,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestPullObject(bool bIsPulling);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestToggleAim(bool IsAiming);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRequestThrowObject();
@@ -127,8 +140,6 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerFinishThrow();
 
-
-	//**** Animation Functions ****//
 	bool PlayThrowMontage();
 	bool PlayCelebrateMontage();
 
@@ -140,52 +151,16 @@ protected:
 
 	UFUNCTION()
 	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
+
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION()
 	void OnNotifyBeginReceived(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
+
 	UFUNCTION()
 	void OnNotifyEndReceived(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
 
-	FOnMontageBlendingOutStarted BlendingOutDelegate;
-	FOnMontageEnded MontageEndedDelegate;
-
-
-	UPROPERTY(EditAnywhere, Category = "Throw", meta = (ClampMin = "0.0", Unit = "ms"))
-	float ThrowSpeed = 2000.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Character Movement: Walking")
-	float SprintSpeed = 1200.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Character Movement: Walking")
-	float WalkSpeed = 600.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Character Movement: Walking")
-	float CrouchSpeed = 200.0f;
-
-
-	/* Fall Damage */
-	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MinImpactSpeed = 800.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MaxImpactSpeed = 1600.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MinStunTime = 1.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MaxStunTime = 1.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Animation")
-	UAnimMontage* ThrowMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Sound")
-	USoundCue* HeavyLandSound = nullptr;
-
-
-	//**** Stun Functions ****//
 	void OnStunBegin(float StunRatio);
 	void UpdateStun(float DeltaTime);
 	void OnStunEnd();
@@ -196,22 +171,50 @@ protected:
 	void UpdateRescue(float DeltaTime);
 	void EndRescue();
 
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float SprintSpeed = 1200.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Fall Impact")
+	float MinImpactSpeed = 600.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Fall Impact")
+	float MaxImpactSpeed = 1200.0f;
+
+	//Time in Seconds
+	UPROPERTY(EditAnywhere, Category = "Fall Impact")
+	float MinStunTime = 1.0f;
+	//Time in Seconds
+	UPROPERTY(EditAnywhere, Category = "Fall Impact")
+	float MaxStunTime = 1.0f;
+	//Sound Cue Fall Impact
+	UPROPERTY(EditAnywhere, Category = "Fall Impact")
+	USoundCue* HeavyLandSound = nullptr;
+
 	float StunTime = 0.0f;
 	float CurrentStunTimer = 0.0f;
 
 	bool bIsStunned = false;
 	bool bIsSprinting = false;
 
-	float MaxWalkSpeed = 600.0f;
+	float MaxWalkSpeed = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_CharacterThrowState, Category = "Throw")
 	ECharacterThrowState CharacterThrowState = ECharacterThrowState::None;
 
+	UFUNCTION()
+	void OnRep_CharacterThrowState(const ECharacterThrowState& OldCharacterThrowState);
+
+	UPROPERTY(EditAnywhere, Category = "Throw", meta = (ClampMin = "0.0", Unit = "ms"))
+	float ThrowSpeed = 2000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	UAnimMontage* ThrowMontage = nullptr;
+
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimMontage* CelebrateMontage = nullptr;
 
-	UFUNCTION()
-	void OnRep_CharacterThrowState(const ECharacterThrowState& OldCharacterThrowState);
+	FOnMontageBlendingOutStarted BlendingOutDelegate;
+	FOnMontageEnded MontageEndedDelegate;
 
 	//handle fall out of world
 	UPROPERTY(replicated)
@@ -230,17 +233,18 @@ protected:
 	float CurrentRescueTime = 0.0f;
 
 private:
+
 	UPROPERTY()
 	AThrowableActor* ThrowableActor;
 
-	void ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff);
+	void ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff) override;
 	void UpdateEffect(float DeltaTime);
 	void EndEffect();
 
 	bool bIsUnderEffect = false;
 	bool bIsEffectBuff = false;
 
-	float DefaultEffectCooldown = 5.0f;
+	float DefautlEffectCooldown = 5.0f;
 	float EffectCooldown = 0.0f;
 
 	EEffectType CurrentEffect = EEffectType::None;

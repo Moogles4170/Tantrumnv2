@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+
 #include "TantrumnGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
@@ -10,6 +11,8 @@
 #include "TantrumnPlayerState.h"
 #include "TantrumnAIController.h"
 
+#include "TantrumnGameWidget.h"
+
 ATantrumnGameModeBase::ATantrumnGameModeBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -18,7 +21,6 @@ ATantrumnGameModeBase::ATantrumnGameModeBase()
 void ATantrumnGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (ATantrumnGameStateBase* TantrumnGameState = GetGameState<ATantrumnGameStateBase>())
 	{
 		TantrumnGameState->SetGameState(EGameState::Waiting);
@@ -41,27 +43,29 @@ void ATantrumnGameModeBase::AttemptStartGame()
 		}
 		else
 		{
+			//this is always called from the authority, aka here
 			StartGame();
 		}
+
 	}
 }
 
-
 void ATantrumnGameModeBase::DisplayCountdown()
 {
+	//set the hud for the game instances here, and the controller can then do what it needs
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PlayerController = Iterator->Get();
 		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
 		{
-			if (ATantrumnPlayerController* TantrumnPlayerController = Cast<ATantrumnPlayerController>(PlayerController))
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
 			{
-				TantrumnPlayerController->ClientDisplayCountdown(GameCountdownDuration);
+				TantrumnPlayerController->ClientDisplayCountdown(GameCountdownDuration, GameWidgetClass);
 			}
 		}
 	}
 }
-
+//broadcast this?
 void ATantrumnGameModeBase::StartGame()
 {
 	if (ATantrumnGameStateBase* TantrumnGameState = GetGameState<ATantrumnGameStateBase>())
@@ -89,6 +93,7 @@ void ATantrumnGameModeBase::StartGame()
 			}
 		}
 	}
+
 	for (FConstControllerIterator Iterator = GetWorld()->GetControllerIterator(); Iterator; ++Iterator)
 	{
 		ATantrumnAIController* TantrumnAIController = Cast<ATantrumnAIController>(Iterator->Get());
@@ -102,10 +107,13 @@ void ATantrumnGameModeBase::StartGame()
 			}
 		}
 	}
+
 }
+
 void ATantrumnGameModeBase::RestartPlayer(AController* NewPlayer)
 {
 	Super::RestartPlayer(NewPlayer);
+
 	if (APlayerController* PlayerController = Cast<APlayerController>(NewPlayer))
 	{
 		if (PlayerController->GetCharacter() && PlayerController->GetCharacter()->GetCharacterMovement())
@@ -143,7 +151,7 @@ void ATantrumnGameModeBase::RestartGame()
 		APlayerController* PlayerController = Iterator->Get();
 		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
 		{
-			if (ATantrumnPlayerController* TantrumnPlayerController = Cast<ATantrumnPlayerController>(PlayerController))
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
 			{
 				TantrumnPlayerController->ClientRestartGame();
 			}

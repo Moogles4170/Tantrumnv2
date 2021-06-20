@@ -4,85 +4,109 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Sound/SoundCue.h"
+#include "TantrumnGameWidget.h"
+#include "ThrowableActor.h"
 #include "TantrumnPlayerController.generated.h"
 
 class ATantrumnCharacterBase;
 class ATantrumnGameStateBase;
+class UTantrumnGameWidget;
 class UUserWidget;
 
 UCLASS()
 class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	public:
-		virtual void BeginPlay() override;
+public:
 
-		//in local mp we need to make sure the controller has received the player in order to correctly set up the HUD
-		virtual void ReceivedPlayer() override;
+    virtual void BeginPlay() override;
+    //in local mp we need to make sure the controller has received the player in order to correctly set up the hud
+    virtual void ReceivedPlayer() override;
 
-		virtual void OnPossess(APawn* aPawn) override;
-		virtual void OnUnPossess() override;
+    virtual void OnPossess(APawn* aPawn) override;
+    virtual void OnUnPossess() override;
 
-		UFUNCTION(Client, Reliable)
-		void ClientDisplayCountdown(float GameCountdownDuration);
+    UFUNCTION(Client, Reliable)
+    void ClientDisplayCountdown(float GameCountdownDuration, TSubclassOf<UTantrumnGameWidget> InGameWidgetClass);
 
-		UFUNCTION(Client, Reliable)
-		void ClientRestartGame();
+    UFUNCTION(Client, Reliable)
+    void ClientRestartGame();
 
-		UFUNCTION(Client, Reliable)
-		void ClientReachedEnd();
+    UFUNCTION(Client, Reliable)
+    void ClientReachedEnd();
 
-		UFUNCTION(Server, Reliable)
-		void ServerRestartLevel();
+    UFUNCTION(BlueprintCallable)
+    void OnRetrySelected();
 
-	protected:
+    UFUNCTION(Server, Reliable)
+    void ServerRestartLevel();
 
-		void SetupInputComponent() override;
+    void ApplyThrowableDamage(float Damage);
 
-		bool CanProcessRequest() const;
+    UPROPERTY(BlueprintReadOnly, Category = "Player Health")
+    float PlayerHealth;
 
-		void RequestMoveForward(float AxisValue);
-		void RequestMoveRight(float AxisValue);
-		void RequestLookUp(float AxisValue);
-		void RequestLookRight(float AxisValue);
-		void RequestThrowObject(float AxisValue);
+    UFUNCTION(BlueprintCallable)
+    float GetPlayerHealth() { return PlayerHealth; }
 
-		void RequestPullObject();
-		void RequestStopPullObject();
+protected:
 
-		void RequestJump();
-		void RequestJumpStop();
+    void SetupInputComponent() override;
 
-		void RequestCrouchStart();
-		void RequestCrouchStop();
+    bool CanProcessRequest() const;
 
-		void RequestSprintStart();
-		void RequestSprintEnd();
+    void RequestMoveForward(float AxisValue);
+    void RequestMoveRight(float AxisValue);
+    void RequestLookUp(float AxisValue);
+    void RequestLookRight(float AxisValue);
+    void RequestThrowObject(float AxisValue);
+
+    void RequestPullorAimObject();
+    void RequestStopPullorAimObject();
+
+    void RequestJump();
+    void RequestStopJump();
+
+    void RequestCrouchStart();
+    void RequestCrouchEnd();
+
+    UFUNCTION(BlueprintCallable)
+    void RequestSprintStart();
+    void RequestSprintEnd();
 
 
-		UPROPERTY(EditAnywhere, Category = "HUD")
-		TSubclassOf<class UUserWidget> HUDClass;
+   
+    UPROPERTY(EditAnywhere, Category = "HUD")
+    TSubclassOf<class UUserWidget> HUDClass;
 
-		UPROPERTY()
-		UUserWidget* HUDWidget;
+    UPROPERTY()
+    UUserWidget* HUDWidget;
 
-		/** Base lookup rate, in deg/sec. Other scaling may affect final lookup rate. */
-		UPROPERTY(EditAnywhere, Category = "Look")
-		float BaseLookUpRate = 90.0f;
+    /** Base lookup rate, in deg/sec. Other scaling may affect final lookup rate. */
+    UPROPERTY(EditAnywhere, Category = "Look")
+    float BaseLookUpRate = 90.0f;
 
-		/** Base lookright rate, in deg/sec. Other scaling may affect final lookup rate. */
-		UPROPERTY(EditAnywhere, Category = "Look")
-		float BaseLookRightRate = 90.0f;
+    /** Base lookright rate, in deg/sec. Other scaling may affect final lookup rate. */
+    UPROPERTY(EditAnywhere, Category = "Look")
+    float BaseLookRightRate = 90.0f;
 
-		//used to determine flick of axis
-		float LastAxis = 0.0f;
+    /**Sound Cue for Jumping Sound. */
 
-		UPROPERTY(EditAnywhere, Category = "Input")
-		float FlickThreshold = 0.70f;
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    USoundCue* JumpSound = nullptr;
 
-		UPROPERTY()
-		ATantrumnGameStateBase* TantrumnGameState;
+    UPROPERTY()
+    ATantrumnGameStateBase* TantrumnGameState;
+
+    UPROPERTY()
+    UTantrumnGameWidget* TantrumnGameWidget = nullptr;
+
+    //used to determine flick of axis
+    //float LastDelta = 0.0f;
+    float LastAxis = 0.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Input")
+    float FlickThreshold = 0.70f;
 };
-
-

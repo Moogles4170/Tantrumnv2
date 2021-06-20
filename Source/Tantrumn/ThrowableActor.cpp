@@ -4,15 +4,14 @@
 #include "ThrowableActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
-#include "InteractInterface.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "DrawDebugHelpers.h"
+#include "InteractInterface.h"
 #include "TantrumnCharacterBase.h"
 
 // Sets default values
 AThrowableActor::AThrowableActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true);
@@ -25,7 +24,6 @@ AThrowableActor::AThrowableActor()
 void AThrowableActor::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (HasAuthority())
 	{
 		ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AThrowableActor::ProjectileStop);
@@ -45,11 +43,12 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 
+	//potentially early out if not authoritive
+
 	if (State == EState::Idle || State == EState::Attached || State == EState::Dropped)
 	{
 		return;
 	}
-
 
 	if (State == EState::Launch)
 	{
@@ -58,8 +57,16 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 		{
 			I->Execute_ApplyEffect(Other, EffectType, false);
 		}
-	}
 
+		AActor* CurrentOwner = GetOwner();
+		if (CurrentOwner && CurrentOwner != Other)
+		{
+			if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(Other))
+			{
+				TantrumnCharacterBase->NotifyHitByThrowable(this);
+			}
+		}
+	}
 
 	if (PullActor && State == EState::Pull)
 	{
@@ -81,27 +88,17 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 			}
 		}
 	}
+
 	ProjectileMovementComponent->HomingTargetComponent = nullptr;
 	PullActor = nullptr;
 }
 
+//only called on authority
 void AThrowableActor::ProjectileStop(const FHitResult& ImpactResult)
 {
 	if (State == EState::Launch || State == EState::Dropped)
 	{
 		State = EState::Idle;
-	}
-}
-
- //Called every frame
-void AThrowableActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (bHighlighted)
-	{
-		DrawDebugSphere(GetWorld(), GetActorLocation(), 80.0f, 16, FColor::Blue, false, 0.0f, 0, 2.0f);
-
 	}
 }
 
@@ -119,6 +116,7 @@ bool AThrowableActor::Pull(AActor* InActor)
 		PullActor = InActor;
 		return true;
 	}
+
 	return false;
 }
 
@@ -162,13 +160,12 @@ void AThrowableActor::Drop()
 
 void AThrowableActor::ToggleHighlight(bool bIsOn)
 {
-	bHighlighted = bIsOn;
 	StaticMeshComponent->SetRenderCustomDepth(bIsOn);
 }
 
 EEffectType AThrowableActor::GetEffectType()
 {
-	return EEffectType();
+	return EffectType;
 }
 
 bool AThrowableActor::SetHomingTarget(AActor* Target)
@@ -189,4 +186,3 @@ bool AThrowableActor::SetHomingTarget(AActor* Target)
 	}
 	return false;
 }
-

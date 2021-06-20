@@ -19,9 +19,6 @@ public:
 	// Sets default values for this actor's properties
 	AThrowableActor();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	UFUNCTION(BlueprintCallable)
 	bool IsIdle() const { return State == EState::Idle; }
 
@@ -40,6 +37,12 @@ public:
 	bool bHighlighted = false;
 
 	EEffectType GetEffectType();
+
+	UPROPERTY(EditAnywhere, Category = "Damage")
+	float ThrowableDamageAmount;
+
+	UFUNCTION(BlueprintCallable)
+	float GetThrowableDamage() { return ThrowableDamageAmount; }
 
 protected:
 
