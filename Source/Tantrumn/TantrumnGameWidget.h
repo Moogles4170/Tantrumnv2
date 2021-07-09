@@ -26,4 +26,5 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void RemoveResults();
+
 };

@@ -2,7 +2,7 @@
 
 
 #include "TantrumnCharacterBase.h"
-
+#include "TantrumnGameWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TantrumnPlayerController.h"
@@ -80,13 +80,10 @@ void ATantrumnCharacterBase::BeginPlay()
 	}
 }
 
-// Called every frame
 void ATantrumnCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//this is done on the clients to ensure the anim looks correct
-	//no need to spam network traffic with curve value
 	if (CharacterThrowState == ECharacterThrowState::Throwing)
 	{
 		UpdateThrowMontagePlayRate();
@@ -104,7 +101,6 @@ void ATantrumnCharacterBase::Tick(float DeltaTime)
 		return;
 	}
 
-	//these should run on the authority to prevent cheating
 	if (bIsStunned)
 	{
 		UpdateStun(DeltaTime);
@@ -376,15 +372,19 @@ void ATantrumnCharacterBase::ClientThrowableAttached_Implementation(AThrowableAc
 
 void ATantrumnCharacterBase::ServerBeginThrow_Implementation()
 {
-	//ignore collisions otherwise the throwable object hits the player capsule and doesn't travel in the desired direction
-	if (ThrowableActor->GetRootComponent())
+	if (ThrowableActor)
 	{
-		UPrimitiveComponent* RootPrimitiveComponent = Cast<UPrimitiveComponent>(ThrowableActor->GetRootComponent());
-		if (RootPrimitiveComponent)
+		//ignore collisions otherwise the throwable object hits the player capsule and doesn't travel in the desired direction
+		if (ThrowableActor->GetRootComponent())
 		{
-			RootPrimitiveComponent->IgnoreActorWhenMoving(this, true);
+			UPrimitiveComponent* RootPrimitiveComponent = Cast<UPrimitiveComponent>(ThrowableActor->GetRootComponent());
+			if (RootPrimitiveComponent)
+			{
+				RootPrimitiveComponent->IgnoreActorWhenMoving(this, true);
+			}
 		}
 	}
+	
 	//const FVector& Direction = GetMesh()->GetSocketRotation(TEXT("ObjectAttach")).Vector() * -ThrowSpeed;
 	const FVector& Direction = GetActorForwardVector() * ThrowSpeed;
 	ThrowableActor->Launch(Direction);
@@ -453,7 +453,7 @@ void ATantrumnCharacterBase::NotifyHitByThrowable(AThrowableActor* InThrowable)
 	ATantrumnPlayerController* PC = GetController<ATantrumnPlayerController>();
 	if (PC)
 	{
-		PC->ApplyThrowableDamage(Damage);
+		PC->ApplyThrowableDamage(Damage);		
 	}
 }
 
@@ -721,16 +721,15 @@ void ATantrumnCharacterBase::OnStunBegin(float StunRatio)
 {
 	if (bIsStunned)
 	{
-		//for now just early exit, alternative option would be to add to the stun time
 		return;
 	}
 
-	const float StunDelt = MaxStunTime - MinStunTime;
-	StunTime = MinStunTime + (StunRatio * StunDelt);
+	const float StunDelta = MaxStunTime - MinStunTime;   //delta = 3-2 = 1
+	StunTime = MinStunTime + (StunRatio * StunDelta);      // stuntime = 2 + (1*1)
 	CurrentStunTimer = 0.0f;
-	//StunBeginTimestamp = FApp::GetCurrentTime();
-	bIsStunned = true;
 
+	bIsStunned = true;
+	
 	if (bIsSprinting)
 	{
 		RequestSprintEnd();
@@ -744,7 +743,7 @@ void ATantrumnCharacterBase::UpdateStun(float DeltaTime)
 	{
 		CurrentStunTimer += DeltaTime;
 		bIsStunned = CurrentStunTimer < StunTime;
-		//bIsStunned = (FApp::GetCurrentTime() - StunBeginTimestamp) < StunTime;
+		
 		if (!bIsStunned)
 		{
 			OnStunEnd();
@@ -817,6 +816,7 @@ void ATantrumnCharacterBase::OnRep_CharacterThrowState(const ECharacterThrowStat
 		UE_LOG(LogTemp, Warning, TEXT("CharacterThrowState: %s"), *UEnum::GetDisplayValueAsText(CharacterThrowState).ToString());
 	}
 }
+
 
 void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff)
 {

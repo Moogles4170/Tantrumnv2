@@ -108,7 +108,6 @@ void ATantrumnPlayerController::ReceivedPlayer()
 			HUDWidget = CreateWidget(this, HUDClass);
 			if (HUDWidget)
 			{
-				//HUDWidget->AddToViewport();
 				HUDWidget->AddToPlayerScreen();
 			}
 		}
@@ -349,5 +348,7 @@ void ATantrumnPlayerController::RequestSprintEnd()
 
 void ATantrumnPlayerController::ApplyThrowableDamage(float Damage)
 {
-	PlayerHealth -= Damage;
+	PlayerHealth += Damage;
 }
+
+

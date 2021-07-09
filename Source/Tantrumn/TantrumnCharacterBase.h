@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractInterface.h"
 #include "GameFramework/Character.h"
+#include "TantrumnGameWidget.h"
 #include "Sound/SoundCue.h"
 #include "TantrumnCharacterBase.generated.h"
 
@@ -212,6 +213,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimMontage* CelebrateMontage = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	UAnimMontage* DeathMontage = nullptr;
 
 	FOnMontageBlendingOutStarted BlendingOutDelegate;
 	FOnMontageEnded MontageEndedDelegate;

@@ -43,9 +43,10 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerRestartLevel();
 
+    UFUNCTION(BlueprintCallable)
     void ApplyThrowableDamage(float Damage);
 
-    UPROPERTY(BlueprintReadOnly, Category = "Player Health")
+    UPROPERTY(EditAnywhere, Category = "Player Health")
     float PlayerHealth;
 
     UFUNCTION(BlueprintCallable)
@@ -76,7 +77,6 @@ protected:
     void RequestSprintStart();
     void RequestSprintEnd();
 
-
    
     UPROPERTY(EditAnywhere, Category = "HUD")
     TSubclassOf<class UUserWidget> HUDClass;
@@ -102,6 +102,7 @@ protected:
 
     UPROPERTY()
     UTantrumnGameWidget* TantrumnGameWidget = nullptr;
+
 
     //used to determine flick of axis
     //float LastDelta = 0.0f;
